@@ -32,6 +32,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 
@@ -143,7 +144,9 @@ public class AccountResource {
         Account account = Account.<Account>findByIdOptional(subject.orElseThrow(Exceptions::subjectMissing))
             .orElseThrow(Exceptions::accountNotFound);
 
-        var query = Account.find("from Account where permissionLevel <= ?1", Sort.by("username"), account.permissionLevel);
+        // Only return accounts with strictly lower permission levels (subordinates)
+        // Remove the equals condition to prevent lateral movement
+        var query = Account.find("from Account where permissionLevel < ?1", Sort.by("username"), account.permissionLevel);
         if(account.isSuperAdmin()) {
             return query.project(AccountSubordinatesExtendedListDto.class).list();
         }
@@ -210,26 +213,112 @@ public class AccountResource {
 
     private byte[] fetchImageFromUrl(String profilePictureUrl) throws IOException, InterruptedException {
         URI uri = URI.create(profilePictureUrl);
-        if (!uri.getRawPath().endsWith(".png") && !uri.getRawPath().endsWith(".jpg")) {
-            throw new BadRequestException("invalid profile picture URL");
+        
+        // Enhanced validation for file extension
+        String path = uri.getRawPath();
+        if (path == null || (!path.toLowerCase().endsWith(".png") && !path.toLowerCase().endsWith(".jpg") && !path.toLowerCase().endsWith(".jpeg"))) {
+            throw new BadRequestException("invalid profile picture URL - must end with .png, .jpg, or .jpeg");
         }
+        
+        // Enhanced SSRF protection
+        String host = uri.getHost();
+        if (host == null) {
+            throw new BadRequestException("invalid URL - no host specified");
+        }
+        
+        // Check for blocked hosts and IP ranges
+        if (isBlockedHost(host)) {
+            throw new ForbiddenException("forbidden URL - blocked host");
+        }
+        
+        InetAddress address = InetAddress.getByName(host);
+        
+        // Block all local, loopback, and private network addresses
+        if (address.isLoopbackAddress() || 
+            address.isAnyLocalAddress() || 
+            address.isLinkLocalAddress() ||
+            address.isSiteLocalAddress() ||
+            isPrivateIP(address)) {
+            throw new ForbiddenException("forbidden URL - private/local address not allowed");
+        }
+        
+        // Additional check if this resolves to a local interface
+        if (isThisMyIpAddress(address)) {
+            throw new ForbiddenException("forbidden URL - resolves to local interface");
+        }
+        
         try (HttpClient client = HttpClient.newBuilder()
             .followRedirects(HttpClient.Redirect.NORMAL)
+            .connectTimeout(Duration.ofSeconds(10))
             .build()) {
+            
             HttpRequest request = HttpRequest.newBuilder()
                 .uri(uri)
+                .timeout(Duration.ofSeconds(30))
                 .GET()
                 .build();
-            boolean isLocalHost = isThisMyIpAddress(InetAddress.getByName(request.uri().getHost()));
-            if (isLocalHost) {
-               throw new ForbiddenException("forbidden URL");
-            }
+                
             HttpResponse<byte[]> response = client.send(request, HttpResponse.BodyHandlers.ofByteArray());
             
-            return response.body();
+            // Validate response
+            if (response.statusCode() != 200) {
+                throw new BadRequestException("failed to fetch image - HTTP " + response.statusCode());
+            }
+            
+            // Check content type
+            String contentType = response.headers().firstValue("content-type").orElse("");
+            if (!contentType.startsWith("image/")) {
+                throw new BadRequestException("invalid content type - must be an image");
+            }
+            
+            // Check file size (limit to 5MB)
+            byte[] body = response.body();
+            if (body.length > 5 * 1024 * 1024) {
+                throw new BadRequestException("image too large - maximum 5MB allowed");
+            }
+            
+            return body;
         }
-
-
+    }
+    
+    private boolean isBlockedHost(String host) {
+        // Block common internal/localhost variations
+        String lowerHost = host.toLowerCase();
+        return lowerHost.equals("localhost") ||
+               lowerHost.equals("127.0.0.1") ||
+               lowerHost.equals("::1") ||
+               lowerHost.equals("0.0.0.0") ||
+               lowerHost.matches("127\\.\\d+\\.\\d+\\.\\d+") ||
+               lowerHost.matches("0\\.\\d+\\.\\d+\\.\\d+") ||
+               lowerHost.contains("169.254.169.254") || // AWS metadata
+               lowerHost.contains("metadata.google.internal") || // GCP metadata
+               lowerHost.contains("kubernetes.default") || // K8s internal
+               lowerHost.contains(".internal") ||
+               lowerHost.contains(".local");
+    }
+    
+    private boolean isPrivateIP(InetAddress addr) {
+        byte[] ip = addr.getAddress();
+        
+        // IPv4 private ranges
+        if (ip.length == 4) {
+            int first = ip[0] & 0xFF;
+            int second = ip[1] & 0xFF;
+            
+            // 10.0.0.0/8
+            if (first == 10) return true;
+            
+            // 172.16.0.0/12
+            if (first == 172 && second >= 16 && second <= 31) return true;
+            
+            // 192.168.0.0/16
+            if (first == 192 && second == 168) return true;
+            
+            // 169.254.0.0/16 (link-local)
+            if (first == 169 && second == 254) return true;
+        }
+        
+        return false;
     }
 
     @POST
