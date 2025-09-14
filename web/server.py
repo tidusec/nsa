@@ -40,7 +40,8 @@ def get_bwt_keys():
 
 
 app = Flask(__name__)
-app.secret_key = secrets.token_urlsafe()
+# Use environment variable for secret key, fallback to secure random if not set
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', secrets.token_urlsafe(32))
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
     "DATABSE_URI", "postgresql://dbuser:superSecret@nsa-db:5432/vulndb"
 )
@@ -79,6 +80,35 @@ class EncryptedChat(db.Model):
 with app.app_context():
     db.create_all()
     db.session.commit()
+
+
+# Rate limiting implementation
+failed_login_attempts = {}
+RATE_LIMIT_ATTEMPTS = 5
+RATE_LIMIT_WINDOW = 300  # 5 minutes
+
+def is_rate_limited(ip):
+    """Check if IP is rate limited"""
+    current_time = datetime.datetime.now()
+    if ip in failed_login_attempts:
+        attempts = failed_login_attempts[ip]
+        # Clean old attempts
+        attempts = [attempt for attempt in attempts if (current_time - attempt).seconds < RATE_LIMIT_WINDOW]
+        failed_login_attempts[ip] = attempts
+        return len(attempts) >= RATE_LIMIT_ATTEMPTS
+    return False
+
+def record_failed_login(ip):
+    """Record a failed login attempt"""
+    current_time = datetime.datetime.now()
+    if ip not in failed_login_attempts:
+        failed_login_attempts[ip] = []
+    failed_login_attempts[ip].append(current_time)
+
+def clear_failed_logins(ip):
+    """Clear failed login attempts for successful login"""
+    if ip in failed_login_attempts:
+        del failed_login_attempts[ip]
 
 
 #################################
@@ -128,20 +158,44 @@ def landing():
 
     success = request.args.get("success", "")
     if request.method == "POST":
+        # Input validation
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "")
+        
+        # Basic input validation
+        if not username or not password:
+            return render_template("index.html", error="Please enter both username and password"), 400
+            
+        if len(username) > 50 or len(password) > 100:
+            return render_template("index.html", error="Invalid credentials"), 400
+            
+        # Rate limiting check (simple implementation)
+        client_ip = request.environ.get('HTTP_X_FORWARDED_FOR', request.remote_addr)
+        if is_rate_limited(client_ip):
+            return render_template("index.html", error="Too many login attempts. Please try again later."), 429
+        
         user = {
-            "username": request.form.get("username", default=""),
-            "password": request.form.get("password", default=""),
+            "username": username,
+            "password": password,
         }
-        login_response = backend.post("/accounts/login", json=user)
-        error = getResponseErrorMessage(login_response)
-        if error:
-            return render_template("index.html", error="Invalid ID or Access Code"), 401
-        subject = login_response.json()["subject"]
-        token = bwt.encode({"sub": subject}, bwt_keys["private"], BWT_ALG)
+        
+        try:
+            login_response = backend.post("/accounts/login", json=user)
+            error = getResponseErrorMessage(login_response)
+            if error:
+                record_failed_login(client_ip)
+                return render_template("index.html", error="Invalid ID or Access Code"), 401
+            subject = login_response.json()["subject"]
+            token = bwt.encode({"sub": subject}, bwt_keys["private"], BWT_ALG)
 
-        response = redirect("/dashboard")
-        response.set_cookie("NSA_JWT", token)
-        return response
+            response = redirect("/dashboard")
+            response.set_cookie("NSA_JWT", token, httponly=True, secure=True, samesite='Strict')
+            clear_failed_logins(client_ip)
+            return response
+        except Exception as e:
+            app.logger.error(f"Login error: {str(e)}")
+            record_failed_login(client_ip)
+            return render_template("index.html", error="Login failed. Please try again."), 500
 
     return render_template("index.html", success=success)
 
@@ -375,29 +429,40 @@ def upload_chat():
     chat_data = request.form.get("chat_data", "")
     if not chat_data.strip():
         return jsonify({"status": "error", "message": "Chat data not provided"}), 400
+    
+    # Input validation
+    if len(chat_data) > 10000:  # Limit to 10KB
+        return jsonify({"status": "error", "message": "Chat data too large"}), 400
+    
+    # Sanitize input (basic)
+    chat_data = chat_data.replace('<script', '&lt;script').replace('</script>', '&lt;/script&gt;')
 
-    # Generate new keypair for this chat
-    chat_public_key, chat_private_key = generate_keys()
+    try:
+        # Generate new keypair for this chat
+        chat_public_key, chat_private_key = generate_keys()
 
-    # Encrypt the chat with your existing function
-    encrypted_chat = encryption_oracle(chat_data, chat_public_key)
+        # Encrypt the chat with your existing function
+        encrypted_chat = encryption_oracle(chat_data, chat_public_key)
 
-    # Store encrypted chat in the DB
-    new_chat = EncryptedChat(
-        user_id=user_id,
-        chat_data=json.dumps(encrypted_chat),
-        public_key=json.dumps(chat_public_key),
-        private_key=json.dumps(chat_private_key)
-    )
-    db.session.add(new_chat)
-    db.session.commit()
+        # Store encrypted chat in the DB
+        new_chat = EncryptedChat(
+            user_id=user_id,
+            chat_data=json.dumps(encrypted_chat),
+            public_key=json.dumps(chat_public_key),
+            private_key=json.dumps(chat_private_key)
+        )
+        db.session.add(new_chat)
+        db.session.commit()
 
-    # Redirect user back to the chats page
-    return jsonify({
-        "status": "success", 
-        "chat_id": new_chat.id,
-        "public_key": chat_public_key
-    }), 200
+        # Redirect user back to the chats page
+        return jsonify({
+            "status": "success", 
+            "chat_id": new_chat.id,
+            "public_key": chat_public_key
+        }), 200
+    except Exception as e:
+        app.logger.error(f"Chat upload error: {str(e)}")
+        return jsonify({"status": "error", "message": "Failed to upload chat"}), 500
 
 
 @app.route("/api/v1/download-chat", methods=["GET"])
@@ -405,10 +470,26 @@ def upload_chat():
 def download_chat():
     chat_id = request.args.get("chat_id")
     current_user = get_request_subject()
+    
+    # Input validation
+    if not chat_id:
+        return jsonify({"status": "error", "message": "Chat ID required"}), 400
+    
+    try:
+        chat_id = int(chat_id)
+    except ValueError:
+        return jsonify({"status": "error", "message": "Invalid chat ID"}), 400
 
     # Check role from backend
-    user_data = backend.get(f"/accounts/{current_user}").json()
-    role = user_data.get("role", "user")
+    try:
+        user_response = backend.get(f"/accounts/{current_user}")
+        if not user_response.ok:
+            return jsonify({"status": "error", "message": "User not found"}), 404
+        user_data = user_response.json()
+        role = user_data.get("role", "user")
+    except Exception as e:
+        app.logger.error(f"Error fetching user data: {str(e)}")
+        return jsonify({"status": "error", "message": "Failed to verify user"}), 500
 
     chat = EncryptedChat.query.get(chat_id)
     if not chat:
@@ -427,7 +508,8 @@ def download_chat():
                 }
             }), 200
         except Exception as e:
-            return jsonify({"status": "error", "message": str(e)}), 500
+            app.logger.error(f"Decryption error: {str(e)}")
+            return jsonify({"status": "error", "message": "Failed to decrypt chat"}), 500
     
     return jsonify({
         "data": {
@@ -472,4 +554,6 @@ def getResponseErrorMessage(response):
 
 
 if __name__ == "__main__":
-    app.run(port=1337, debug=True)
+    # Disable debug mode in production
+    debug_mode = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
+    app.run(port=1337, debug=debug_mode)

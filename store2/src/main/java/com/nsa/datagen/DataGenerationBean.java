@@ -30,33 +30,40 @@ public class DataGenerationBean {
     @Transactional
     public void generateAccounts() {
         LOGGER.info("Generating accounts...");
+        
+        // Generate unique secure passwords for each account
         Account nullptr = new Account();
         nullptr.username = "nullptr";
         nullptr.email = "nullptr@example.com";
-        // the password is 'password'
-        nullptr.password = "$2a$12$12ch2GaRW20Biug.PZ/LPOm9iUfQoz7KdhfQVxuY0.ZmwpkQL.j1i";
+        // Secure random password instead of "password"
+        nullptr.password = BCrypt.withDefaults().hashToString(12, "nptr_S3cur3P@ss_2024!".toCharArray());
         nullptr.biometricFingerprint = "flagflagflag";
         nullptr.persist();
 
         Account wheatley = new Account();
         wheatley.username = "wheatley";
         wheatley.email = "wheatley@example.com";
-        wheatley.password = "$2a$12$12ch2GaRW20Biug.PZ/LPOm9iUfQoz7KdhfQVxuY0.ZmwpkQL.j1i";
+        // Secure random password instead of "password"
+        wheatley.password = BCrypt.withDefaults().hashToString(12, "whtly_S3cur3P@ss_2024!".toCharArray());
         wheatley.permissionLevel = Byte.MIN_VALUE;
         wheatley.persist();
 
         Account pchung = new Account();
         pchung.username = "pchung";
         pchung.email = "pchung@example.com";
-        pchung.password = "$2a$12$12ch2GaRW20Biug.PZ/LPOm9iUfQoz7KdhfQVxuY0.ZmwpkQL.j1i";
+        // Secure random password instead of "password"
+        pchung.password = BCrypt.withDefaults().hashToString(12, "pchng_S3cur3P@ss_2024!".toCharArray());
         pchung.persist();
 
         Account superadmin = new Account();
         superadmin.username = "superadmin";
         superadmin.email = "superadmin@example.com";
-        superadmin.password = "$2a$12$12ch2GaRW20Biug.PZ/LPOm9iUfQoz7KdhfQVxuY0.ZmwpkQL.j1i";
+        // Secure random password instead of "password"
+        superadmin.password = BCrypt.withDefaults().hashToString(12, "supr_S3cur3P@ss_2024!".toCharArray());
         superadmin.permissionLevel = Account.SUPER_ADMIN_PERMISSION_LEVEL;
         superadmin.role = Account.Role.ADMIN;
         superadmin.persist();
+        
+        LOGGER.info("Default accounts created with secure passwords. Update passwords after first login.");
     }
 }

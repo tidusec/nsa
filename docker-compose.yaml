@@ -4,6 +4,8 @@ services:
   nsa-web:
     environment:
       - BACKEND_HOST=nsa-api:8080
+      - FLASK_SECRET_KEY=${FLASK_SECRET_KEY}
+      - FLASK_DEBUG=${FLASK_DEBUG:-false}
     build: web
     restart: unless-stopped
     ports:
@@ -16,6 +18,8 @@ services:
       context: ./store2
       dockerfile: Dockerfile
     restart: unless-stopped
+    environment:
+      - NSA_ADMIN_ESCALATION_KEY=${NSA_ADMIN_ESCALATION_KEY}
     depends_on:
       nsa-db:
         condition: service_healthy
@@ -25,15 +29,15 @@ services:
     image: postgres:14.4-alpine3.16
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-dbuser} -d ${POSTGRES_DB:-vulndb}"]
       interval: 10s
       retries: 5
       start_period: 30s
       timeout: 10s
     environment:
-      - POSTGRES_USER=dbuser
-      - POSTGRES_DB=vulndb
-      - POSTGRES_PASSWORD=superSecret
+      - POSTGRES_USER=${POSTGRES_USER:-dbuser}
+      - POSTGRES_DB=${POSTGRES_DB:-vulndb}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
