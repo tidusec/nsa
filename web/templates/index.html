@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Not a secure application</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-black text-white h-screen">
+
+  <div class="flex justify-center items-center h-full">
+    <div class="max-w-xl w-full">
+      <div class="flex flex-col items-center gap-4">
+        <svg class="w-8 h-8 text-white" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-lock"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <h2 class="text-5xl font-bold text-center">NSA</h2>
+        <p class="text-gray-400">Not a Secure Application</p>
+      </div>
+      {% if error %}
+        <div class="bg-red-500 text-white p-4 rounded-xl mt-4">
+        <!-- NSA_ERROR_MARKER --> {{ error }}
+        </div>
+      {% endif %}
+      {% if success %}
+        <div class="bg-green-500 text-white p-4 rounded-xl mt-4">
+          {{ success }}
+        </div>
+      {% endif %}
+      <form class="mt-8 flex flex-col gap-4" method="post">
+        <div class="mb-4">
+          <label for="username" class="">Agent ID</label>
+          <input
+            id="username"
+            name="username"
+            type="text"
+            autocomplete="username"
+            required
+            class="w-full px-4 py-2 bg-gray-800 rounded-xl mt-2 text-lg"
+            placeholder="NSA010894"
+          />
+        </div>
+        <div class="mb-4">
+          <label for="password">Access Code</label>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            autocomplete="current-password"
+            required
+            class="w-full px-4 py-2 bg-gray-800 rounded-xl mt-2 text-lg"
+            placeholder="Enter access code"
+          />
+        </div>
+        <div>
+          <button type="submit" class="w-full hover:bg-gray-700 border-gray-700 border text-lg text-white px-4 py-2 rounded-xl">
+            Access Dashboard
+          </button>
+        </div>
+      </form>
+      <div class="mt-4 text-center">
+        <p class="text-gray-400">Don't have an account? 
+          <a href="/register" class="text-blue-400 hover:text-blue-600">Register here</a>.
+        </p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

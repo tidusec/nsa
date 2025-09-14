@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NSA Personnel Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#121417] relative max-w-[1800px] m-auto">
+    <nav class="relative w-full lg:fixed lg:w-[24rem] lg:h-screen lg:py-32 px-8 flex flex-col gap-4">
+        <a href="/dashboard" class="hover:bg-[#293038] rounded-xl w-full px-16 py-6 flex flex-row justify-start gap-4 text-white">
+          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-house"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+          <h1 class="text-2xl font-medium">Dashboard</h1>
+        </a>
+    
+        <a href="/agents" class="hover:bg-[#293038] rounded-xl w-full px-16 py-6 flex flex-row items-center gap-4 text-white">
+          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user-round"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>
+          <h1 class="text-2xl font-medium">Agents</h1>
+        </a>
+    
+        <a href="/chats" class="hover:bg-[#293038] rounded-xl w-full px-16 py-6 flex flex-row items-center gap-4 text-white">
+          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-message-square"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                <h1 class="text-2xl font-medium">Chats</h1>
+        </a>
+    
+        <a href="#" class="bg-[#293038] rounded-xl w-full px-16 py-6 flex flex-row items-center gap-4 text-white">
+          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-settings"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+          <h1 class="text-2xl font-medium">Settings</h1>
+        </a>
+
+        <a href="/logout" class="hover:bg-[#293038] rounded-xl w-full px-16 py-6 flex flex-row items-center gap-4 text-white">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                 stroke-linejoin="round" class="lucide lucide-log-out">
+              <path d="M9 21H5a2 2 0 0 1 -2 -2V5a2 2 0 0 1 2 -2h4"/>
+              <path d="M16 17l5 -5 -5 -5"/>
+              <path d="M21 12H9"/>
+            </svg>
+            <h1 class="text-2xl font-medium">Logout</h1>
+          </a>
+      </nav>
+      <div class="relative lg:absolute lg:right-0 lg:top-0 lg:w-[calc(100%-24rem)] min-h-screen p-32 text-white">
+
+        <h1 class="text-5xl font-bold mb-8">Account Settings</h1>
+        <p class="text-gray-400 mb-8">Manage your account details, including username, email, profile picture, and permission levels.</p>
+
+        <!-- User Account Details -->
+        <div class="rounded-xl overflow-hidden border border-gray-700 bg-gray-900 p-8">
+            {% if error %}
+                <div class="bg-red-500 text-white p-4 rounded-xl mt-4">
+                Error: <!-- NSA_ERROR_MARKER --> {{ error }}
+                </div>
+            {% endif %}
+            <h2 class="text-3xl font-semibold mb-4">Your Account</h2>
+            <form action="/settings" method="POST" class="space-y-4">
+                <div>
+                    <label for="username" class="block text-sm font-medium text-gray-400">Username</label>
+                    <input type="text" id="username" name="username" class="mt-1 block w-full bg-gray-800 border border-gray-700 text-white rounded-md py-2 px-4" value="{{user.username}}" readonly>
+                </div>
+
+                <div>
+                    <label for="firstname" class="block text-sm font-medium text-gray-400">Firstname</label>
+                    <input type="text" id="firstname" name="firstname" class="mt-1 block w-full bg-gray-800 border border-gray-700 text-white rounded-md py-2 px-4" value="{{user.firstname}}" required>
+                </div>
+
+                <div>
+                    <label for="lastname" class="block text-sm font-medium text-gray-400">Lastname</label>
+                    <input type="text" id="lastname" name="lastname" class="mt-1 block w-full bg-gray-800 border border-gray-700 text-white rounded-md py-2 px-4" value="{{user.lastname}}" required>
+                </div>
+
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-400">New Password</label>
+                    <input type="password" id="password" name="password" class="mt-1 block w-full bg-gray-800 border border-gray-700 text-white rounded-md py-2 px-4" autocomplete="new-password">
+                </div>
+
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-400">Email</label>
+                    <input type="email" id="email" name="email" class="mt-1 block w-full bg-gray-800 border border-gray-700 text-white rounded-md py-2 px-4" value="{{user.email}}" required>
+                </div>
+
+                <div>
+                    <label for="biometricFingerprint" class="block text-sm font-medium text-gray-400">Biometric Fingerprint</label>
+                    <input type="text" id="biometricFingerprint" name="biometricFingerprint" class="mt-1 block w-full bg-gray-800 border border-gray-700 text-white rounded-md py-2 px-4" value="{{user.biometricFingerprint}}" readonly>
+                </div>
+
+                <div >
+                    <label for="profile-picture" class="block text-sm font-medium text-gray-400">Profile Picture</label>
+                    <input type="url" id="profile-picture" name="profile-picture" class="mt-1 block w-full bg-gray-800 border border-gray-700 text-white rounded-md py-2 px-4" placeholder="Provide link to an image">
+                </div>
+                <div>
+                    <img 
+                        src="/profilePicture/{{user.username}}" 
+                        alt="Profile Picture" 
+                        class="rounded-full w-32 h-32 border-4 border-gray-700"
+                        onerror="this.onerror = null; this.src='https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png';"
+                    >
+                </div>
+                <button type="submit" class="mt-4 w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-500">Update Account</button>
+            </form>
+        </div>
+</div>
+</body>
+</html>

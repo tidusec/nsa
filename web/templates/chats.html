@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Not a secure application</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#121417] relative max-w-[1800px] m-auto">
+  <nav class="relative w-full lg:fixed lg:w-[24rem] lg:h-screen lg:py-32 px-8 flex flex-col gap-4">
+    <a href="/dashboard" class="hover:bg-[#293038] rounded-xl w-full px-16 py-6 flex flex-row justify-start gap-4 text-white">
+      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-house"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+      <h1 class="text-2xl font-medium">Dashboard</h1>
+    </a>
+
+    <a href="/agents" class="hover:bg-[#293038] rounded-xl w-full px-16 py-6 flex flex-row items-center gap-4 text-white">
+      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user-round"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>
+      <h1 class="text-2xl font-medium">Agents</h1>
+    </a>
+
+    <a href="/chats" class="bg-[#293038] rounded-xl w-full px-16 py-6 flex flex-row items-center gap-4 text-white">
+      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-message-square"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <h1 class="text-2xl font-medium">Chats</h1>
+    </a>
+
+    <a href="/settings" class="hover:bg-[#293038] rounded-xl w-full px-16 py-6 flex flex-row items-center gap-4 text-white">
+      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-settings"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+      <h1 class="text-2xl font-medium">Settings</h1>
+    </a>
+
+    <a href="/logout" class="hover:bg-[#293038] rounded-xl w-full px-16 py-6 flex flex-row items-center gap-4 text-white">
+      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2" stroke-linecap="round"
+           stroke-linejoin="round" class="lucide lucide-log-out">
+        <path d="M9 21H5a2 2 0 0 1 -2 -2V5a2 2 0 0 1 2 -2h4"/>
+        <path d="M16 17l5 -5 -5 -5"/>
+        <path d="M21 12H9"/>
+      </svg>
+      <h1 class="text-2xl font-medium">Logout</h1>
+    </a>
+  </nav>
+
+  <div class="relative lg:absolute lg:right-0 lg:top-0 lg:w-[calc(100%-24rem)] min-h-screen p-32 text-white">
+    <h1 class="text-5xl font-bold mb-8">Chats</h1>
+    <p class="text-gray-400 mb-8">See all of the chats we stole from the devices of suspicious subjects. Upload new stolen chats here.</p>
+
+    <p class="text-gray-400 mb-8">You can download an encrypted version of the messages (for metadata). Admins can download decrypted chats.</p>
+
+    <!-- New Chat Upload Form -->
+    <form action="/api/v1/upload-chat" method="POST" class="mt-6 mb-6">
+      <textarea 
+        name="chat_data" 
+        class="w-full h-24 p-2 mb-2 border border-gray-700 bg-gray-900 text-white rounded-xl"
+        placeholder="Write suspicious chat data here..."
+        required
+      ></textarea>
+      <button 
+        type="submit" 
+        class="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded"
+      >
+        Upload Chat
+      </button>
+    </form>
+
+    <!-- Chats table -->
+    <div class="rounded-xl overflow-hidden border border-gray-700 bg-gray-900">
+        <table class="min-w-full divide-y divide-gray-700">
+            <thead class="bg-gray-800">
+                <tr>
+                    <th class="px-6 py-3 text-left text-sm font-medium text-gray-400">ID</th>
+                    <th class="px-6 py-3 text-left text-sm font-medium text-gray-400">User ID</th>
+                    <th class="px-6 py-3 text-left text-sm font-medium text-gray-400">Timestamp</th>
+                    <th class="px-6 py-3 text-left text-sm font-medium text-gray-400">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-700">
+              {% for chat in chats %}
+              <tr>
+                <td class="px-6 py-4 flex flex-row items-center gap-4">
+                  {{ chat.id }}
+                </td>
+                <td class="px-6 py-4">{{ chat.user_id }}</td>
+                <td class="px-6 py-4">{{ chat.formatted_time }}</td>
+                <td class="px-6 py-4">
+                  {% if user == chat.user_id or role == 'ADMIN' %}
+                    <!-- The route is the same, but server side logic decides whether to decrypt -->
+                    <a href="/api/v1/download-chat?chat_id={{ chat.id }}" 
+                       class="hover:bg-gray-700 border-gray-700 border text-white px-4 py-2 rounded-xl">
+                      Download decrypted
+                    </a>
+                  {% else %}
+                    <a href="/api/v1/download-chat?chat_id={{ chat.id }}" 
+                       class="hover:bg-gray-700 border-gray-700 border text-white px-4 py-2 rounded-xl">
+                      Download encrypted
+                    </a>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,9 @@
+setup.py
+PyBWT.egg-info/PKG-INFO
+PyBWT.egg-info/SOURCES.txt
+PyBWT.egg-info/dependency_links.txt
+PyBWT.egg-info/top_level.txt
+bwt/__init__.py
+bwt/api_bwt.py
+bwt/api_ctypes.py
+bwt/libbwt.so

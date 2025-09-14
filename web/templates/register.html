@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NSA Registration</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    #biometricFingerprintButton {
+      height: 100px;
+      width: 100px;
+      display: flex;
+      justify-content: center;
+      align-items: stretch;
+      background: transparent;
+      position: relative;
+    }
+    #biometricFingerprintButton::before {
+      content: '';
+      display: inline-block;
+      position: absolute;
+      inset: 0;
+      border: 3px solid white;
+      border-radius: 1.5rem;
+    }
+    #biometricFingerprintButton::after {
+      content: '';
+      display: inline-block;
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: var(--scan-progress, 0);
+      background-color: lime;
+      mix-blend-mode: multiply;
+    }
+    #biometricFingerprintButton img {
+      filter: invert(1);
+    }
+  </style>
+</head>
+<body class="bg-black text-white h-screen">
+
+  <div class="flex justify-center items-center h-full">
+    <div class="max-w-xl w-full">
+      <div class="flex flex-col items-center gap-4">
+        <svg class="w-8 h-8 text-white" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-lock"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <h2 class="text-5xl font-bold text-center">NSA Registration</h2>
+        <p class="text-gray-400">Create your account</p>
+      </div>
+      {% if error %}
+        <div class="bg-red-500 text-white p-4 rounded-xl mt-4">
+          <!-- NSA_ERROR_MARKER --> {{ error }}
+        </div>
+      {% endif %}
+      <form class="mt-8 flex flex-col gap-4" method="post" action="/register">
+        <div class="mb-2">
+          <label for="username" class="">Agent ID</label>
+          <input
+            id="username"
+            name="username"
+            type="text"
+            autocomplete="username"
+            required
+            class="w-full px-4 py-2 bg-gray-800 rounded-xl mt-2 text-lg"
+            placeholder="NSA010894"
+          />
+        </div>
+
+        <div class="mb-2">
+          <label for="firstname">First Name</label>
+          <input
+            id="firstname"
+            name="firstname"
+            type="text"
+            required
+            class="w-full px-4 py-2 bg-gray-800 rounded-xl mt-2 text-lg"
+            placeholder="John"
+          />
+        </div>
+
+        <div class="mb-2">
+          <label for="lastname">Last Name</label>
+          <input
+            id="lastname"
+            name="lastname"
+            type="text"
+            required
+            class="w-full px-4 py-2 bg-gray-800 rounded-xl mt-2 text-lg"
+            placeholder="Doe"
+          />
+        </div>
+
+        <div class="mb-2">
+          <label for="email">Email</label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            autocomplete="email"
+            required
+            class="w-full px-4 py-2 bg-gray-800 rounded-xl mt-2 text-lg"
+            placeholder="example@nsa.gov"
+          />
+        </div>
+
+        <div class="mb-2">
+          <label for="password">Access Code</label>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            autocomplete="new-password"
+            required
+            class="w-full px-4 py-2 bg-gray-800 rounded-xl mt-2 text-lg"
+            placeholder="Enter your access code"
+          />
+        </div>
+
+        
+        <div class="mb-2">
+          <label for="password">Biometric Fingerprint</label>
+          <button id="biometricFingerprintButton" type="button">
+            <img src="/static/Fingerprint_picture.svg" alt="Fingerprint">
+          </button>
+
+          <script>
+            {
+              const btn = document.getElementById('biometricFingerprintButton')
+              let progress = 0;
+              let biometricFingerprintDown = false;
+              btn.onmouseup = () => {
+                biometricFingerprintDown = false;
+              }
+              btn.onmousedown = () => {
+                biometricFingerprintDown = true;
+              }
+              const updateBiometricFingerprint = () => {
+                if(biometricFingerprintDown) {
+                  progress += 0.5/60;
+                  btn.style.setProperty("--scan-progress", (Math.min(progress, 1) * 100).toFixed(1) + "%");
+                }
+                if(progress >= 1) {
+                  let fingerprint = "";
+                  for(let i = 0; i < 32; i++) {
+                    fingerprint += (~~(Math.random() * 16)).toString(16)
+                  }
+                  document.getElementById('biometricFingerprint').value = fingerprint
+                  document.getElementById('biometricFingerprintText').textContent = fingerprint
+                  return;
+                }
+                requestAnimationFrame(updateBiometricFingerprint)
+              }
+              requestAnimationFrame(updateBiometricFingerprint)
+            }
+          </script>
+
+          <p class="text-gray-400" id="biometricFingerprintText">Hold to scan</p>
+      
+          <input
+            id="biometricFingerprint"
+            name="biometricFingerprint"
+            required
+            hidden
+          />
+        </div>
+
+        <div class="mb-4">
+          <label for="profile-picture">Profile Picture</label>
+          <input type="url" id="profile-picture" name="profile-picture" class="w-full px-4 py-2 bg-gray-800 rounded-xl mt-2 text-lg" placeholder="Provide link to an image">
+      </div>
+
+        <div>
+          <button type="submit" class="w-full hover:bg-gray-700 border-gray-700 border text-lg text-white px-4 py-2 rounded-xl">
+            Register
+          </button>
+        </div>
+      </form>
+      <div class="mt-4 text-center">
+        <p class="text-gray-400">Already have an account? 
+          <a href="/" class="text-blue-400 hover:text-blue-600">Login here</a>.
+        </p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

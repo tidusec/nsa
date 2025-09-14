@@ -1,0 +1,47 @@
+version: '3'
+
+services:
+  nsa-web:
+    environment:
+      - BACKEND_HOST=nsa-api:8080
+    build: web
+    restart: unless-stopped
+    ports:
+      - 1337:1337
+    depends_on:
+      - nsa-api
+
+  nsa-api:
+    build:
+      context: ./store2
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      nsa-db:
+        condition: service_healthy
+        restart: true
+
+  nsa-db:
+    image: postgres:14.4-alpine3.16
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+    environment:
+      - POSTGRES_USER=dbuser
+      - POSTGRES_DB=vulndb
+      - POSTGRES_PASSWORD=superSecret
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
+  keys_data:
+  api_db:
+
+networks:
+  default:
+    name: nsa
